@@ -2,20 +2,20 @@
 /**
  * Database Configuration (example)
  *
- * Copy this file to config/db.php and fill in YOUR local values:
- *   copy config/db.example.php config/db.php
+ * Copy this file, then fill in YOUR own values:
+ *   copy config\db.example.php config\db.php
  *
- * config/db.php is gitignored. Do not commit real hosting credentials.
+ * config/db.php is gitignored. Never commit real hosting credentials,
+ * cron secrets, recovery keys, or production site URLs.
  */
 
 define('DB_HOST', 'localhost');
 define('DB_PORT', '3306');
-define('DB_NAME', 'parcel_delivery_db');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_NAME', 'your_database_name');
+define('DB_USER', 'your_db_user');
+define('DB_PASS', 'your_db_password');
 define('DB_CHARSET', 'utf8mb4');
 
-// Application-wide constants
 define('APP_NAME',    'ParcelTrack Pro');
 define('APP_VERSION', '1.0.0');
 
@@ -30,7 +30,6 @@ define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5 MB
  * Returns a shared PDO instance (lazy singleton).
  *
  * @return PDO
- * @throws RuntimeException on connection failure
  */
 function db(): PDO
 {

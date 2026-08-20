@@ -196,52 +196,7 @@ CREATE TABLE `activity_logs` (
   CONSTRAINT `fk_al_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =============================================================
--- Seed Data
--- Admin:  admin@parcel.local  / Admin@1234
--- Rider:  rider@parcel.local  / Rider@1234
--- Rider2: rider2@parcel.local / Rider@1234
--- =============================================================
-
-INSERT INTO `users` (`name`, `email`, `password`, `role`) VALUES
-('System Admin',  'admin@parcel.local',  '$2y$12$WvAIeVqdfEWSP66tq5N8Be4zVv71T9xJhun98ua/1NPAdPZ.uvOui', 'admin'),
-('Juan Dela Cruz','rider@parcel.local',  '$2y$12$vJ2WohXZwU4tX1yimmy.vuj56e2oeKQ8l5aRX5c.JmsN1RxQZwf2i', 'rider'),
-('Maria Santos',  'rider2@parcel.local', '$2y$12$vJ2WohXZwU4tX1yimmy.vuj56e2oeKQ8l5aRX5c.JmsN1RxQZwf2i', 'rider');
-
--- The password hashes above are valid bcrypt hashes for the demo credentials.
-
--- Rider profiles
-INSERT INTO `riders` (`user_id`, `phone`, `vehicle_type`, `plate_number`) VALUES
-(2, '09171234567', 'Motorcycle', 'ABC-1234'),
-(3, '09189876543', 'Bicycle',    'N/A');
-
--- Sample parcels
-INSERT INTO `parcels` (`tracking_number`, `sender_name`, `sender_phone`, `recipient_name`, `recipient_phone`, `recipient_address`, `weight`, `rider_id`, `status`, `created_by`) VALUES
-('PDS-20240101-0001', 'Acme Corp',       '02-8123-4567', 'Jose Rizal',    '09111111111', '123 Rizal Ave, Manila',           1.50, 1, 'out_for_delivery', 1),
-('PDS-20240101-0002', 'Globe Telecom',   '02-7890-1234', 'Andres Bonifacio','09222222222','456 Bonifacio St, Quezon City',   0.80, 1, 'pending',          1),
-('PDS-20240101-0003', 'SM Stores',       '02-5555-6666', 'Emilio Aguinaldo','09333333333','789 Aguinaldo Hwy, Cavite',       3.20, 2, 'delivered',        1),
-('PDS-20240101-0004', 'Lazada PH',       '02-7777-8888', 'Gabriela Silang', '09444444444','321 Silang Rd, Ilocos Sur',       0.30, NULL,'pending',         1),
-('PDS-20240101-0005', 'Shopee Express',  '02-9999-0000', 'Antonio Luna',    '09555555555','654 Luna St, Pampanga',           2.10, 2, 'failed',           1);
-
--- Status history for sample parcels
-INSERT INTO `parcel_status_history` (`parcel_id`, `status`, `remarks`, `updated_by`) VALUES
-(1, 'pending',          'Parcel received at sorting facility.',   1),
-(1, 'out_for_delivery', 'Rider picked up the parcel.',            2),
-(2, 'pending',          'Parcel received at sorting facility.',   1),
-(3, 'pending',          'Parcel received.',                       1),
-(3, 'out_for_delivery', 'En route to recipient.',                 3),
-(3, 'delivered',        'Delivered successfully. Signed by recipient.', 3),
-(4, 'pending',          'Awaiting rider assignment.',             1),
-(5, 'pending',          'Parcel received.',                       1),
-(5, 'out_for_delivery', 'Rider en route.',                        3),
-(5, 'failed',           'Recipient not found at address.',        3);
-
--- Sample activity logs
-INSERT INTO `activity_logs` (`user_id`, `action`, `details`, `ip_address`) VALUES
-(1, 'login',          'Admin logged in.',                  '127.0.0.1'),
-(1, 'parcel_created', 'Created parcel PDS-20240101-0001.', '127.0.0.1'),
-(1, 'parcel_created', 'Created parcel PDS-20240101-0002.', '127.0.0.1'),
-(2, 'login',          'Rider logged in.',                  '127.0.0.1'),
-(2, 'status_update',  'Updated parcel #1 to out_for_delivery.', '127.0.0.1');
+-- No seed users, parcels, or logs here.
+-- Run setup.php locally to create empty-role accounts, then change passwords immediately.
 
 COMMIT;

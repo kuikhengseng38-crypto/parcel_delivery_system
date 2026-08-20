@@ -2,10 +2,10 @@
 # Protects sensitive config files and enables clean URLs
 
 # Deny direct access to config files
-<Files "db.php">
+<FilesMatch "^(db\.php|config\.php|database\.php|\.env)$">
     Order deny,allow
     Deny from all
-</Files>
+</FilesMatch>
 
 # Deny access to the setup script from non-local IPs
 # (handled in PHP itself, this is a backup layer)

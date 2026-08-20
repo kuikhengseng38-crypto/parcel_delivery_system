@@ -303,25 +303,9 @@ $csrfToken = csrf_token();
             </button>
         </form>
 
-        <!-- Demo Credentials Helper -->
-        <div class="demo-credentials">
-            <strong>Demo Accounts</strong>
-            <div class="demo-row">
-                <span class="demo-role">Admin</span>
-                <span class="demo-cred">admin@parcel.local</span>
-                <button class="fill-demo-btn" onclick="fillDemo('admin@parcel.local','Admin@1234')">Use</button>
-            </div>
-            <div class="demo-row">
-                <span class="demo-role">Rider 1</span>
-                <span class="demo-cred">rider@parcel.local</span>
-                <button class="fill-demo-btn" onclick="fillDemo('rider@parcel.local','Rider@1234')">Use</button>
-            </div>
-            <div class="demo-row">
-                <span class="demo-role">Rider 2</span>
-                <span class="demo-cred">rider2@parcel.local</span>
-                <button class="fill-demo-btn" onclick="fillDemo('rider2@parcel.local','Rider@1234')">Use</button>
-            </div>
-        </div>
+        <p class="subtitle" style="margin-top:var(--space-4);font-size:var(--font-size-xs)">
+            After setup, sign in with the account shown by <code>setup.php</code>, then change the password immediately.
+        </p>
     </div>
 
     <div class="login-footer">
@@ -343,13 +327,6 @@ $csrfToken = csrf_token();
                 ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
                 : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
         });
-    }
-
-    // Demo credential fill
-    function fillDemo(email, password) {
-        document.getElementById('email').value    = email;
-        document.getElementById('password').value = password;
-        document.getElementById('password').type  = 'password';
     }
 
     // Prevent double-submit

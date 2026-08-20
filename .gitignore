@@ -1,29 +1,57 @@
-# Local database credentials — never commit real hosting accounts
+# Local / production config — never commit real values
 config/db.php
 config/db.local.php
+config/config.php
+config/database.php
+config/installed.lock
 
-# Environment / secret files
+# Environment and keys
 .env
 .env.*
 !.env.example
 *.pem
 *.key
+id_rsa
+id_rsa.pub
 
-# Runtime / OS junk
-.DS_Store
-Thumbs.db
-desktop.ini
+# Hosting notes that often contain secrets (commit the .example copies instead)
+CPANEL.md
+上传说明.txt
+DEPLOY.md
+
+# Runtime / caches / logs
+cron/watch.pid
+*.pid
 *.log
 *.tmp
 *.bak
 *.swp
+/cache/
+/tmp/
 
-# PHP / Composer
-/vendor/
-composer.lock
+# Full database dumps (schema.sql structure-only is OK)
+*.dump.sql
+*backup*.sql
+*_with_data.sql
 
-# User-generated uploads (keep folder rules only)
+# Archives (often include real config)
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# User uploads
 assets/uploads/proofs/*
 !assets/uploads/proofs/.htaccess
 assets/uploads/avatars/*
 !assets/uploads/avatars/.gitkeep
+
+# Local maintenance scripts that can reset accounts
+fix_passwords.php
+
+# OS / Composer
+.DS_Store
+Thumbs.db
+desktop.ini
+/vendor/
+composer.lock

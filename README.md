@@ -48,28 +48,25 @@ PHP + MySQL courier dispatch portal for **educational use**. Admins assign parce
 ## Quick start
 
 1. Clone this repository into your web root (XAMPP `htdocs`, Laragon `www`, etc.).
-2. Copy the example database config and edit **local** values only:
+2. Copy the example database config and edit **your** values only:
 
    ```bash
    copy config\db.example.php config\db.php
    ```
 
-   Set `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASS` for your own machine.  
-   `config/db.php` is gitignored — do **not** commit real hosting credentials.
+   Replace `your_database_name`, `your_db_user`, and `your_db_password`.  
+   `config/db.php` is gitignored — never commit real hosting credentials, cron keys, or recovery keys.
 
-3. Create an empty MySQL database named `parcel_delivery_db` (or match the name in `config/db.php`).
-4. Open `http://localhost/parcel_delivery_system/setup.php` once to create tables and seed demo users.
-5. Sign in at `http://localhost/parcel_delivery_system/login.php`.
+3. Create an empty MySQL database that matches `DB_NAME` in `config/db.php`.
+4. Open `setup.php` once on localhost to create tables and first accounts.  
+   It prints **one-time** passwords — change them immediately in Profile. Do not reuse them on cPanel.
+5. Sign in at `/login.php`, then delete or rename `setup.php`.
 
-### Demo accounts
+Hosting notes use placeholders only:
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Admin | `admin@parcel.local` | `Admin@1234` |
-| Rider | `rider@parcel.local` | `Rider@1234` |
-| Rider 2 | `rider2@parcel.local` | `Rider@1234` |
-
-Change these passwords after setup if you share a server with other people.
+- `docs/CPANEL.example.md`
+- `docs/UPLOAD.example.md`
+- Cron example: `cron.php?key=YOUR_CRON_SECRET`
 
 ## Project layout
 
@@ -77,8 +74,8 @@ Change these passwords after setup if you share a server with other people.
 admin/          Dispatcher UI (radar, parcels, riders, reports, logs)
 rider/          Rider UI (duty status, parcels, routes, history)
 api/            JSON endpoints (GPS, status, uploads, geocoding)
-config/         db.example.php  →  copy to db.php (not committed)
-database/       schema.sql and migrations
+config/         db.example.php / config.example.php  →  copy locally (not committed)
+database/       schema.sql (tables only, no real data)
 assets/         CSS, JS, and upload folders
 includes/       Auth, header/footer, helpers
 ```

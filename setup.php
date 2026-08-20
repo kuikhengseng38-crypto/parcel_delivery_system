@@ -213,32 +213,33 @@ foreach ([
     }
 }
 
-// ── Step 4: Seed users (skip if already exist) ───────────────────────────────
+// ── Step 4: Seed users (create only; never bake a shared default password) ──
 $seedUsers = [
-    ['System Admin',   'admin@parcel.local',  'Admin@1234', 'admin'],
-    ['Juan Dela Cruz', 'rider@parcel.local',  'Rider@1234', 'rider'],
-    ['Maria Santos',   'rider2@parcel.local', 'Rider@1234', 'rider'],
+    ['System Admin',   'admin@parcel.local',  'admin'],
+    ['Juan Dela Cruz', 'rider@parcel.local',  'rider'],
+    ['Maria Santos',   'rider2@parcel.local', 'rider'],
 ];
 
 $insertedUsers = [];
-foreach ($seedUsers as [$name, $email, $plainPw, $role]) {
+$issuedPasswords = [];
+foreach ($seedUsers as [$name, $email, $role]) {
     $check = $pdo->prepare('SELECT id FROM users WHERE email = ?');
     $check->execute([$email]);
     $existing = $check->fetch();
 
     if ($existing) {
-        // Always update the password hash to ensure it's correct
-        $hash = password_hash($plainPw, PASSWORD_BCRYPT, ['cost' => 12]);
-        $pdo->prepare('UPDATE users SET password = ? WHERE email = ?')->execute([$hash, $email]);
         $insertedUsers[$email] = (int) $existing['id'];
-        $steps[] = "🔄 User <strong>{$email}</strong> already exists — password hash refreshed (ID #{$existing['id']}).";
-    } else {
-        $hash = password_hash($plainPw, PASSWORD_BCRYPT, ['cost' => 12]);
-        $pdo->prepare('INSERT INTO users (name, email, password, role) VALUES (?,?,?,?)')->execute([$name,$email,$hash,$role]);
-        $id = (int) $pdo->lastInsertId();
-        $insertedUsers[$email] = $id;
-        $steps[] = "✅ User <strong>{$email}</strong> created (ID #{$id}) · password: <code>{$plainPw}</code>";
+        $steps[] = "🔄 User <strong>{$email}</strong> already exists (ID #{$existing['id']}) — password left unchanged.";
+        continue;
     }
+
+    $plainPw = bin2hex(random_bytes(8));
+    $hash = password_hash($plainPw, PASSWORD_BCRYPT, ['cost' => 12]);
+    $pdo->prepare('INSERT INTO users (name, email, password, role) VALUES (?,?,?,?)')->execute([$name,$email,$hash,$role]);
+    $id = (int) $pdo->lastInsertId();
+    $insertedUsers[$email] = $id;
+    $issuedPasswords[] = ['role' => $role, 'email' => $email, 'password' => $plainPw];
+    $steps[] = "✅ User <strong>{$email}</strong> created (ID #{$id}). One-time password shown below — change it immediately.";
 }
 
 // ── Step 5: Seed rider profiles ──────────────────────────────────────────────
@@ -347,19 +348,28 @@ if (!is_dir($uploadDir)) {
 
 <div class="done">
     <h2>✅ Setup Complete!</h2>
-    <p>Your database has been configured. Use the credentials below to log in:</p>
+    <p>Your database has been configured. Change every new password immediately after login.</p>
 
+    <?php if ($issuedPasswords): ?>
     <div class="creds">
         <table>
-            <tr><th>Role</th><th>Email</th><th>Password</th></tr>
-            <tr><td><strong>Admin</strong></td><td>admin@parcel.local</td><td><code>Admin@1234</code></td></tr>
-            <tr><td>Rider 1</td><td>rider@parcel.local</td><td><code>Rider@1234</code></td></tr>
-            <tr><td>Rider 2</td><td>rider2@parcel.local</td><td><code>Rider@1234</code></td></tr>
+            <tr><th>Role</th><th>Email</th><th>One-time password</th></tr>
+            <?php foreach ($issuedPasswords as $row): ?>
+            <tr>
+                <td><?= htmlspecialchars($row['role'], ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars($row['email'], ENT_QUOTES, 'UTF-8') ?></td>
+                <td><code><?= htmlspecialchars($row['password'], ENT_QUOTES, 'UTF-8') ?></code></td>
+            </tr>
+            <?php endforeach; ?>
         </table>
     </div>
+    <?php else: ?>
+    <p>No new accounts were created. Existing passwords were not changed.</p>
+    <?php endif; ?>
 
     <div class="warn">
-        ⚠️ <strong>Important:</strong> Delete or rename <code>setup.php</code> after completing setup to prevent unauthorised re-initialisation.
+        ⚠️ <strong>Important:</strong> These passwords are shown once. Change them in Profile, then delete or rename <code>setup.php</code>.
+        Never commit real database passwords, cron keys, or recovery keys.
     </div>
 
     <a class="btn" href="/parcel_delivery_system/login.php">Go to Login →</a>
