@@ -180,12 +180,12 @@ $role       = 'admin';
             <div style="display:flex;align-items:center;gap:var(--space-5);margin-bottom:var(--space-5);">
                 <!-- Preview circle -->
                 <div id="avatarPreviewWrap" style="position:relative;flex-shrink:0;">
-                    <div id="avatarPreview" style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--color-accent,#f97316),#fb923c);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;overflow:hidden;border:3px solid var(--color-border);cursor:pointer;" title="Click to change photo" onclick="document.getElementById('avatarInput').click()">
+                    <div id="avatarPreview" style="width:88px;height:88px;border-radius:50%;background:var(--color-accent);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;overflow:hidden;border:3px solid var(--color-border);cursor:pointer;" title="Click to change photo" onclick="document.getElementById('avatarInput').click()">
                         <span id="avatarInitial"><?= strtoupper(substr($values['name'] ?: 'R', 0, 1)) ?></span>
                         <img id="avatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
                     </div>
                     <!-- Camera overlay -->
-                    <label for="avatarInput" style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--color-accent,#f97316);border:2px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;" title="Upload photo">
+                    <label for="avatarInput" style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--color-accent);border:2px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;" title="Upload photo">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     </label>
                 </div>

@@ -53,11 +53,9 @@ $whereSQL = implode(' AND ', $where);
 
 // Total count for pagination
 $countSQL = "SELECT COUNT(*) FROM parcels p WHERE {$whereSQL}";
-$total    = (int) $pdo->prepare($countSQL) && false ? 0 : (function () use ($pdo, $countSQL, $params) {
-    $stmt = $pdo->prepare($countSQL);
-    $stmt->execute($params);
-    return (int) $stmt->fetchColumn();
-})();
+$countStmt = $pdo->prepare($countSQL);
+$countStmt->execute($params);
+$total = (int) $countStmt->fetchColumn();
 
 $pg      = paginate($total, $perPage, $page);
 $parcels = (function () use ($pdo, $whereSQL, $params, $perPage, $pg) {

@@ -1,1 +1,29 @@
+# Local database credentials — never commit real hosting accounts
 config/db.php
+config/db.local.php
+
+# Environment / secret files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime / OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+*.bak
+*.swp
+
+# PHP / Composer
+/vendor/
+composer.lock
+
+# User-generated uploads (keep folder rules only)
+assets/uploads/proofs/*
+!assets/uploads/proofs/.htaccess
+assets/uploads/avatars/*
+!assets/uploads/avatars/.gitkeep

@@ -33,13 +33,14 @@ $pdo = db();
 
 // Verify rider owns the parcel
 $stmt = $pdo->prepare(
-    'SELECT p.id FROM parcels p
+    'SELECT p.id, p.status, r.id AS rider_id FROM parcels p
      JOIN riders r ON r.id = p.rider_id
      WHERE p.id = ? AND r.user_id = ?'
 );
 $stmt->execute([$parcelId, current_user_id()]);
 
-if (!$stmt->fetch()) {
+$parcel = $stmt->fetch();
+if (!$parcel) {
     json_response(false, 'Parcel not found or access denied.');
 }
 
@@ -51,6 +52,10 @@ $pdo->prepare('UPDATE parcels SET status = ?, updated_at = NOW() WHERE id = ?')
 $pdo->prepare(
     'INSERT INTO parcel_status_history (parcel_id, status, remarks, updated_by) VALUES (?, ?, ?, ?)'
 )->execute([$parcelId, $status, $remarks ?: null, current_user_id()]);
+
+if ($status === 'delivered' && $parcel['status'] !== 'delivered') {
+    capture_delivery_route($pdo, $parcelId, (int) $parcel['rider_id']);
+}
 
 log_activity(current_user_id(), 'status_update', "Parcel #{$parcelId} → {$status}. {$remarks}");
 

@@ -294,3 +294,36 @@ function time_ago(string $datetime): string
         return $datetime;
     }
 }
+
+/**
+ * Preserve the rider's actual GPS trace when a delivery is completed.
+ * A unique parcel key makes this an immutable first-completion snapshot.
+ */
+function capture_delivery_route(PDO $pdo, int $parcelId, int $riderId): void
+{
+    $exists = $pdo->prepare('SELECT id FROM delivery_route_records WHERE parcel_id = ?');
+    $exists->execute([$parcelId]);
+    if ($exists->fetch()) return;
+
+    $start = $pdo->prepare("SELECT created_at FROM parcel_status_history WHERE parcel_id = ? AND status = 'out_for_delivery' ORDER BY created_at DESC LIMIT 1");
+    $start->execute([$parcelId]);
+    $startedAt = $start->fetchColumn() ?: date('Y-m-d H:i:s', time() - 4 * 3600);
+    $completedAt = date('Y-m-d H:i:s');
+
+    $locations = $pdo->prepare('SELECT latitude, longitude, recorded_at FROM rider_locations WHERE rider_id = ? AND recorded_at BETWEEN ? AND ? ORDER BY recorded_at ASC');
+    $locations->execute([$riderId, $startedAt, $completedAt]);
+    $points = array_map(static fn(array $row): array => [
+        'lat' => (float) $row['latitude'], 'lng' => (float) $row['longitude'], 'at' => $row['recorded_at'],
+    ], $locations->fetchAll());
+
+    $distance = 0.0;
+    for ($i = 1, $count = count($points); $i < $count; $i++) {
+        $lat1 = deg2rad($points[$i - 1]['lat']); $lat2 = deg2rad($points[$i]['lat']);
+        $dLat = $lat2 - $lat1; $dLng = deg2rad($points[$i]['lng'] - $points[$i - 1]['lng']);
+        $a = sin($dLat / 2) ** 2 + cos($lat1) * cos($lat2) * sin($dLng / 2) ** 2;
+        $distance += 6371000 * 2 * atan2(sqrt($a), sqrt(1 - $a));
+    }
+
+    $record = $pdo->prepare('INSERT IGNORE INTO delivery_route_records (parcel_id, rider_id, started_at, completed_at, path_json, point_count, distance_m) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    $record->execute([$parcelId, $riderId, $startedAt, $completedAt, json_encode($points, JSON_UNESCAPED_UNICODE), count($points), (int) round($distance)]);
+}

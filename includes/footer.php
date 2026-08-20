@@ -26,7 +26,8 @@ $extraScripts = $extraScripts ?? [];
 
 <!-- Page-specific scripts -->
 <?php foreach ($extraScripts as $src): ?>
-<script src="<?= BASE_URL . e($src) ?>"></script>
+<?php $version = is_file(__DIR__ . '/..' . $src) ? filemtime(__DIR__ . '/..' . $src) : time(); ?>
+<script src="<?= BASE_URL . e($src) ?>?v=<?= $version ?>"></script>
 <?php endforeach; ?>
 
 <!-- Initialise Feather icons -->

@@ -17,6 +17,8 @@ $values = [
     'recipient_name'    => '',
     'recipient_phone'   => '',
     'recipient_address' => '',
+    'recipient_latitude' => '',
+    'recipient_longitude' => '',
     'weight'            => '',
     'notes'             => '',
     'rider_id'          => '',
@@ -42,6 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    $latitude = $values['recipient_latitude'] !== '' ? filter_var($values['recipient_latitude'], FILTER_VALIDATE_FLOAT) : null;
+    $longitude = $values['recipient_longitude'] !== '' ? filter_var($values['recipient_longitude'], FILTER_VALIDATE_FLOAT) : null;
+    if (($latitude === null) !== ($longitude === null)
+        || ($latitude !== null && ($latitude === false || $longitude === false || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180))) {
+        $errors['recipient_location'] = 'Select a valid delivery point on the map, or clear both coordinates.';
+    }
+
     if (empty($errors)) {
         $tracking = generate_tracking_number();
         $riderId  = $values['rider_id'] !== '' ? (int) $values['rider_id'] : null;
@@ -50,8 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare(
             'INSERT INTO parcels
              (tracking_number, sender_name, sender_phone, recipient_name, recipient_phone,
-              recipient_address, weight, notes, rider_id, status, created_by)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, \'pending\', ?)'
+              recipient_address, recipient_latitude, recipient_longitude, weight, notes, rider_id, status, created_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'pending\', ?)'
         );
 
         $stmt->execute([
@@ -61,6 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $values['recipient_name'],
             $values['recipient_phone'],
             $values['recipient_address'],
+            $latitude,
+            $longitude,
             $weight,
             $values['notes'] ?: null,
             $riderId,
@@ -84,6 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle  = 'New Parcel';
 $activePage = 'parcels';
 $role       = 'admin';
+$usesMap    = true;
+$extraScripts = ['/assets/js/parcel_location_picker.js'];
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
 <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
@@ -155,9 +168,23 @@ $role       = 'admin';
             <div class="form-group">
                 <label class="form-label" for="recipient_address">Delivery Address <span class="required">*</span></label>
                 <textarea id="recipient_address" name="recipient_address" class="form-control" rows="3" required><?= e($values['recipient_address']) ?></textarea>
+                <button type="button" id="locateRecipientAddress" class="btn btn-secondary btn-sm" style="margin-top:var(--space-2);">Auto-locate address</button>
                 <?php if (isset($errors['recipient_address'])): ?>
                 <div class="form-error" style="display:block"><?= e($errors['recipient_address']) ?></div>
                 <?php endif; ?>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Exact delivery point <span class="text-muted">(recommended)</span></label>
+                <p class="text-xs text-muted" style="margin:-0.25rem 0 var(--space-3);">Click the map to save the recipient's exact location. Rider routes use this point first.</p>
+                <input type="hidden" id="recipient_latitude" name="recipient_latitude" value="<?= e($values['recipient_latitude']) ?>">
+                <input type="hidden" id="recipient_longitude" name="recipient_longitude" value="<?= e($values['recipient_longitude']) ?>">
+                <div id="recipientLocationMap" style="height:300px;border:1px solid var(--color-border);border-radius:var(--radius-md);"></div>
+                <div class="d-flex align-center gap-3" style="margin-top:var(--space-3);">
+                    <span id="recipientLocationLabel" class="text-xs text-muted">No exact point selected.</span>
+                    <button type="button" id="clearRecipientLocation" class="btn btn-secondary btn-sm">Clear point</button>
+                </div>
+                <?php if (isset($errors['recipient_location'])): ?><div class="form-error" style="display:block"><?= e($errors['recipient_location']) ?></div><?php endif; ?>
             </div>
 
             <hr style="border:none;border-top:1px solid var(--color-border);margin:var(--space-5) 0;">
@@ -198,4 +225,7 @@ $role       = 'admin';
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => ParcelLocationPicker.init('recipientLocationMap'));
+</script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

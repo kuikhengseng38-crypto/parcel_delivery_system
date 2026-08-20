@@ -67,7 +67,7 @@ $csrfToken = csrf_token();
     <style>
         /* Login-page specific styles */
         body {
-            background: linear-gradient(135deg, #1a2332 0%, #243045 50%, #1e3a5f 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1f2937 50%, #334155 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -88,13 +88,13 @@ $csrfToken = csrf_token();
         .login-logo {
             width: 64px;
             height: 64px;
-            background: linear-gradient(135deg, var(--color-accent), #fb923c);
+            background: var(--color-accent);
             border-radius: var(--radius-xl);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             margin-bottom: var(--space-4);
-            box-shadow: 0 8px 24px rgba(249,115,22,0.4);
+            box-shadow: 0 8px 24px rgba(37,99,235,0.25);
         }
 
         .login-logo svg {
@@ -121,9 +121,8 @@ $csrfToken = csrf_token();
             border-radius: var(--radius-xl);
             padding: var(--space-8);
             box-shadow:
-                0 25px 60px rgba(0,0,0,0.35),
-                0 0 0 1px rgba(255,255,255,0.08);
-            backdrop-filter: blur(12px);
+                0 18px 40px rgba(15,23,42,0.18),
+                0 0 0 1px rgba(226,232,240,0.65);
         }
 
         .login-card h2 {

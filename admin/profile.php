@@ -93,7 +93,7 @@ $role       = 'admin';
         <!-- Large avatar with change-photo overlay -->
         <div style="position:relative;flex-shrink:0;">
             <div id="adminAvatarEl"
-                 style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--color-accent,#f97316),#fb923c);display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:700;color:#fff;overflow:hidden;cursor:pointer;border:3px solid var(--color-border);"
+                  style="width:100px;height:100px;border-radius:50%;background:var(--color-accent);display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:700;color:#fff;overflow:hidden;cursor:pointer;border:3px solid var(--color-border);"
                  title="Click to change profile photo"
                  onclick="document.getElementById('adminAvatarFile').click()">
                 <?php if ($user['avatar']): ?>
@@ -106,7 +106,7 @@ $role       = 'admin';
             </div>
             <!-- Camera badge -->
             <label for="adminAvatarFile"
-                   style="position:absolute;bottom:2px;right:2px;width:30px;height:30px;border-radius:50%;background:var(--color-accent,#f97316);border:3px solid var(--color-bg-card,#fff);display:flex;align-items:center;justify-content:center;cursor:pointer;"
+                     style="position:absolute;bottom:2px;right:2px;width:30px;height:30px;border-radius:50%;background:var(--color-accent);border:3px solid var(--color-surface,#fff);display:flex;align-items:center;justify-content:center;cursor:pointer;"
                    title="Upload new photo">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </label>
@@ -135,7 +135,7 @@ $role       = 'admin';
 
     <!-- Avatar upload progress bar (hidden by default) -->
     <div id="avatarProgress" style="display:none;margin-top:var(--space-4);height:4px;border-radius:2px;background:var(--color-border);overflow:hidden;">
-        <div id="avatarProgressBar" style="height:100%;width:0;background:var(--color-accent,#f97316);transition:width .3s;"></div>
+        <div id="avatarProgressBar" style="height:100%;width:0;background:var(--color-accent);transition:width .3s;"></div>
     </div>
 </div>
 

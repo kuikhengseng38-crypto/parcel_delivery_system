@@ -81,6 +81,13 @@ const Tracking = (() => {
 
         const accuracy = position.coords.accuracy;
         setGpsStatus('active', `GPS active · ±${Math.round(accuracy)}m`);
+        document.dispatchEvent(new CustomEvent('rider:location-updated', {
+            detail: {
+                latitude: lastLat,
+                longitude: lastLng,
+                accuracy: accuracy,
+            }
+        }));
 
         // Rate-limit: only push update if enough time has elapsed
         const now = Date.now();

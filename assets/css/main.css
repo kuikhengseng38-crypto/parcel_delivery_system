@@ -1,6 +1,6 @@
 /* =============================================================
-   ParcelTrack Pro — Main CSS
-   Design System: Deep Navy + Orange Accent
+    ParcelTrack Pro — Main CSS
+    Design System: Deep Navy + Tech Blue
    Font: Inter (Google Fonts)
    ============================================================= */
 
@@ -9,12 +9,12 @@
    ------------------------------------------------------------- */
 :root {
     /* Brand Palette */
-    --color-primary:        #1a2332;   /* Deep navy — sidebar, primary text */
-    --color-primary-light:  #243045;   /* Lighter navy — sidebar hover */
-    --color-primary-dark:   #111827;   /* Darkest navy */
-    --color-accent:         #f97316;   /* Vibrant orange — CTA, highlights */
-    --color-accent-hover:   #ea6c05;
-    --color-accent-light:   #fff7ed;   /* Pale orange — badge backgrounds */
+    --color-primary:        #0f172a;   /* Deep navy — sidebar, primary text */
+    --color-primary-light:  #1e3a5f;   /* Lighter blue navy — sidebar hover */
+    --color-primary-dark:   #081120;   /* Darkest navy */
+    --color-accent:         #2563eb;   /* Tech blue — CTA, highlights */
+    --color-accent-hover:   #1d4ed8;
+    --color-accent-light:   #eff6ff;   /* Pale blue — badge backgrounds */
 
     /* Semantic Colours */
     --color-success:        #22c55e;
@@ -27,10 +27,10 @@
     --color-info-bg:        #eff6ff;
 
     /* Neutral Palette */
-    --color-bg:             #f0f2f5;   /* Page background */
+    --color-bg:             #dfe5ee;   /* Page background */
     --color-surface:        #ffffff;   /* Cards, panels */
-    --color-border:         #e2e8f0;
-    --color-border-dark:    #cbd5e1;
+    --color-border:         #c9d2df;
+    --color-border-dark:    #aeb9c9;
     --color-text:           #1e293b;   /* Primary text */
     --color-text-muted:     #64748b;   /* Secondary text */
     --color-text-light:     #94a3b8;   /* Placeholders */
@@ -38,17 +38,17 @@
     /* Sidebar */
     --sidebar-width:        260px;
     --sidebar-collapsed:    72px;
-    --sidebar-bg:           #1a2332;
+    --sidebar-bg:           #1f2937;
     --sidebar-text:         #94a3b8;
     --sidebar-text-active:  #ffffff;
-    --sidebar-accent:       #f97316;
-    --sidebar-item-hover:   #243045;
+    --sidebar-accent:       #64748b;
+    --sidebar-item-hover:   #334155;
 
     /* Top Bar */
     --topbar-height:        64px;
     --topbar-bg:            #ffffff;
-    --topbar-border:        #e2e8f0;
-    --topbar-shadow:        0 1px 4px rgba(0,0,0,0.08);
+    --topbar-border:        #c9d2df;
+    --topbar-shadow:        none;
 
     /* Spacing */
     --space-1: 0.25rem;
@@ -79,10 +79,10 @@
     --radius-full: 9999px;
 
     /* Shadows */
-    --shadow-sm:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-    --shadow-md:  0 4px 12px rgba(0,0,0,0.1);
-    --shadow-lg:  0 10px 25px rgba(0,0,0,0.12);
-    --shadow-xl:  0 20px 40px rgba(0,0,0,0.15);
+    --shadow-sm:  0 1px 2px rgba(15,23,42,0.05);
+    --shadow-md:  0 2px 8px rgba(15,23,42,0.08);
+    --shadow-lg:  0 8px 20px rgba(15,23,42,0.1);
+    --shadow-xl:  0 14px 32px rgba(15,23,42,0.12);
 
     /* Transitions */
     --transition-fast: 150ms ease;
@@ -172,7 +172,7 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-6) var(--space-5);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
     flex-shrink: 0;
 }
 
@@ -185,7 +185,7 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(249,115,22,0.35);
+    box-shadow: none;
 }
 
 .sidebar-logo svg {
@@ -248,9 +248,9 @@ h1, h2, h3, h4, h5, h6 {
 .nav-item a:hover svg { stroke: #ffffff; }
 
 .nav-item.active a {
-    background: linear-gradient(135deg, var(--color-accent), #fb923c);
+    background: rgba(37,99,235,0.14);
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+    box-shadow: none;
 }
 
 .nav-item.active a svg { stroke: #ffffff; }
@@ -258,7 +258,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Sidebar Footer */
 .sidebar-footer {
     padding: var(--space-4) var(--space-5);
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid rgba(255,255,255,0.08);
     display: flex;
     align-items: center;
     gap: var(--space-3);
@@ -269,7 +269,7 @@ h1, h2, h3, h4, h5, h6 {
     width: 36px;
     height: 36px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--color-accent), #fb923c);
+    background: var(--color-accent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -662,7 +662,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .badge-secondary {
     color: var(--color-text-muted);
-    background: #f1f5f9;
+    background: #e8edf3;
 }
 .badge-secondary .badge-dot { background: var(--color-text-muted); }
 
@@ -714,7 +714,7 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--color-surface);
     border: 1px solid var(--color-border-dark);
     border-radius: var(--radius-md);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
     outline: none;
     appearance: none;
     -webkit-appearance: none;
@@ -722,7 +722,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .form-control:focus {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.14);
 }
 
 .form-control::placeholder { color: var(--color-text-light); }
@@ -812,14 +812,14 @@ select.form-control {
 
 /* Primary */
 .btn-primary {
-    background: linear-gradient(135deg, var(--color-accent), #fb923c);
+    background: var(--color-accent);
     color: #ffffff;
     border-color: var(--color-accent);
-    box-shadow: 0 2px 8px rgba(249,115,22,0.25);
+    box-shadow: none;
 }
 .btn-primary:hover {
-    background: linear-gradient(135deg, var(--color-accent-hover), var(--color-accent));
-    box-shadow: 0 4px 14px rgba(249,115,22,0.35);
+    background: var(--color-accent-hover);
+    box-shadow: none;
     color: #ffffff;
 }
 
@@ -830,8 +830,8 @@ select.form-control {
     border-color: var(--color-border-dark);
 }
 .btn-secondary:hover {
-    background: var(--color-bg);
-    border-color: var(--color-text-muted);
+    background: #eef2f7;
+    border-color: #94a3b8;
 }
 
 /* Danger */
@@ -931,7 +931,7 @@ select.form-control {
     align-items: center;
     justify-content: center;
     border: none;
-    background: var(--color-bg);
+    background: #eef2f7;
     border-radius: var(--radius-sm);
     cursor: pointer;
     color: var(--color-text-muted);

@@ -124,7 +124,7 @@ $role       = 'rider';
             </div>
             <!-- Camera badge -->
             <label for="avatarFileInput"
-                   style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:var(--color-accent,#f97316);border:3px solid var(--color-bg,#f1f5f9);display:flex;align-items:center;justify-content:center;cursor:pointer;"
+                     style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:var(--color-accent);border:3px solid var(--color-bg,#f1f5f9);display:flex;align-items:center;justify-content:center;cursor:pointer;"
                    title="Upload new photo">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </label>

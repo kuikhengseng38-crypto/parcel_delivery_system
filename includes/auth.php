@@ -29,12 +29,9 @@ function require_auth(?string $requiredRole = null): void
     }
 
     if ($requiredRole !== null && $_SESSION['user_role'] !== $requiredRole) {
-        // Wrong role — send to their own dashboard.
-        if ($_SESSION['user_role'] === 'admin') {
-            redirect('/admin/dashboard.php');
-        } else {
-            redirect('/rider/dashboard.php');
-        }
+        http_response_code(403);
+        echo 'Access denied.';
+        exit;
     }
 }
 

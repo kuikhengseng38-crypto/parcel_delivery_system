@@ -11,6 +11,10 @@
  * URL: http://localhost/parcel_delivery_system/setup.php
  */
 
+// Reuse the application database credentials so setup and the running app
+// cannot silently drift to different MySQL accounts/passwords.
+require_once __DIR__ . '/config/db.php';
+
 // Allow only localhost access
 $allowedIPs = ['127.0.0.1', '::1', 'localhost'];
 if (!in_array($_SERVER['REMOTE_ADDR'], $allowedIPs)) {
@@ -18,10 +22,10 @@ if (!in_array($_SERVER['REMOTE_ADDR'], $allowedIPs)) {
     die('Access denied. Run this script locally only.');
 }
 
-$host    = 'localhost';
-$dbName  = 'parcel_delivery_db';
-$dbUser  = 'root';
-$dbPass  = '';
+$host    = DB_HOST;
+$dbName  = DB_NAME;
+$dbUser  = DB_USER;
+$dbPass  = DB_PASS;
 
 // ── Step 1: Connect without selecting a database ─────────────────────────────
 try {
@@ -89,6 +93,8 @@ $tables = [
         `recipient_name`    VARCHAR(100) NOT NULL,
         `recipient_phone`   VARCHAR(20)  NOT NULL,
         `recipient_address` TEXT         NOT NULL,
+        `recipient_latitude`  DECIMAL(10,7) DEFAULT NULL,
+        `recipient_longitude` DECIMAL(10,7) DEFAULT NULL,
         `weight`            DECIMAL(8,2) DEFAULT NULL,
         `notes`             TEXT DEFAULT NULL,
         `rider_id`          INT UNSIGNED DEFAULT NULL,
@@ -115,6 +121,53 @@ $tables = [
         KEY `idx_psh_parcel` (`parcel_id`),
         CONSTRAINT `fk_psh_parcel`     FOREIGN KEY (`parcel_id`)  REFERENCES `parcels` (`id`) ON DELETE CASCADE,
         CONSTRAINT `fk_psh_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `users`   (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+    'route_plans' => "CREATE TABLE IF NOT EXISTS `route_plans` (
+        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `rider_id` INT UNSIGNED NOT NULL,
+        `name` VARCHAR(120) NOT NULL DEFAULT 'Delivery route',
+        `origin_latitude` DECIMAL(10,8) DEFAULT NULL,
+        `origin_longitude` DECIMAL(11,8) DEFAULT NULL,
+        `total_distance_m` INT UNSIGNED DEFAULT NULL,
+        `total_duration_s` INT UNSIGNED DEFAULT NULL,
+        `status` ENUM('planned','completed','cancelled') NOT NULL DEFAULT 'planned',
+        `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        KEY `idx_route_plans_rider_time` (`rider_id`,`created_at`),
+        CONSTRAINT `fk_route_plans_rider` FOREIGN KEY (`rider_id`) REFERENCES `riders` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+    'route_plan_stops' => "CREATE TABLE IF NOT EXISTS `route_plan_stops` (
+        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `route_plan_id` INT UNSIGNED NOT NULL,
+        `parcel_id` INT UNSIGNED NOT NULL,
+        `stop_order` SMALLINT UNSIGNED NOT NULL,
+        `latitude` DECIMAL(10,8) NOT NULL,
+        `longitude` DECIMAL(11,8) NOT NULL,
+        `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `uq_route_stop_order` (`route_plan_id`,`stop_order`),
+        KEY `idx_route_stops_parcel` (`parcel_id`),
+        CONSTRAINT `fk_route_stops_plan` FOREIGN KEY (`route_plan_id`) REFERENCES `route_plans` (`id`) ON DELETE CASCADE,
+        CONSTRAINT `fk_route_stops_parcel` FOREIGN KEY (`parcel_id`) REFERENCES `parcels` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+    'delivery_route_records' => "CREATE TABLE IF NOT EXISTS `delivery_route_records` (
+        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `parcel_id` INT UNSIGNED NOT NULL,
+        `rider_id` INT UNSIGNED NOT NULL,
+        `started_at` DATETIME NOT NULL,
+        `completed_at` DATETIME NOT NULL,
+        `path_json` LONGTEXT NOT NULL,
+        `point_count` INT UNSIGNED NOT NULL DEFAULT 0,
+        `distance_m` INT UNSIGNED NOT NULL DEFAULT 0,
+        `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `uq_delivery_route_parcel` (`parcel_id`),
+        KEY `idx_delivery_routes_rider_time` (`rider_id`,`completed_at`),
+        CONSTRAINT `fk_delivery_route_parcel` FOREIGN KEY (`parcel_id`) REFERENCES `parcels` (`id`) ON DELETE CASCADE,
+        CONSTRAINT `fk_delivery_route_rider` FOREIGN KEY (`rider_id`) REFERENCES `riders` (`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
     'delivery_photos' => "CREATE TABLE IF NOT EXISTS `delivery_photos` (
@@ -146,6 +199,18 @@ $tables = [
 foreach ($tables as $name => $sql) {
     $pdo->exec($sql);
     $steps[] = "✅ Table <strong>{$name}</strong> ready.";
+}
+
+// CREATE TABLE IF NOT EXISTS does not add columns to an existing installation.
+$parcelColumns = $pdo->query('SHOW COLUMNS FROM `parcels`')->fetchAll(PDO::FETCH_COLUMN);
+foreach ([
+    'recipient_latitude'  => 'DECIMAL(10,7) DEFAULT NULL',
+    'recipient_longitude' => 'DECIMAL(10,7) DEFAULT NULL',
+] as $column => $definition) {
+    if (!in_array($column, $parcelColumns, true)) {
+        $pdo->exec("ALTER TABLE `parcels` ADD COLUMN `{$column}` {$definition} AFTER `recipient_address`");
+        $steps[] = "✅ Column <strong>parcels.{$column}</strong> added.";
+    }
 }
 
 // ── Step 4: Seed users (skip if already exist) ───────────────────────────────

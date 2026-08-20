@@ -17,7 +17,7 @@ $userId   = current_user_id();
 $parcelId = (int) get_param('id');
 
 // Verify parcel belongs to this rider
-$rider = $pdo->prepare('SELECT id FROM riders WHERE user_id = ?');
+$rider = $pdo->prepare('SELECT id, is_online FROM riders WHERE user_id = ?');
 $rider->execute([$userId]);
 $rider = $rider->fetch();
 
@@ -64,6 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'INSERT INTO parcel_status_history (parcel_id, status, remarks, updated_by) VALUES (?, ?, ?, ?)'
         )->execute([$parcelId, $newStatus, $remarks ?: null, $userId]);
 
+        if ($newStatus === 'delivered' && $parcel['status'] !== 'delivered') {
+            capture_delivery_route($pdo, $parcelId, $riderId);
+        }
+
         log_activity($userId, 'status_update', "Parcel #{$parcelId} ({$parcel['tracking_number']}) → {$newStatus}. Remarks: {$remarks}");
 
         $parcel['status'] = $newStatus; // Update in memory
@@ -86,7 +90,7 @@ $photos = $photos->fetchAll();
 $pageTitle    = 'Update Parcel';
 $activePage   = 'parcels';
 $role         = 'rider';
-$extraScripts = ['/assets/js/upload.js'];
+$extraScripts = ['/assets/js/upload.js', '/assets/js/tracking.js'];
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
 <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
@@ -325,6 +329,8 @@ $extraScripts = ['/assets/js/upload.js'];
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    Tracking.init({ currentlyOnline: <?= $rider['is_online'] ? 'true' : 'false' ?> });
+
     PhotoUpload.init({
         inputId:    'photoInput',
         previewId:  'photoPreview',
@@ -341,6 +347,24 @@ document.addEventListener('DOMContentLoaded', function () {
         PhotoUpload.uploadPhoto(<?= $parcelId ?>).finally(() => {
             this.disabled = false;
         });
+    });
+
+    // Record one last high-accuracy GPS point before completing a delivery.
+    // This makes the route snapshot end at the rider's actual delivery location.
+    const statusForm = document.getElementById('statusForm');
+    statusForm.addEventListener('submit', function (event) {
+        const selected = statusForm.querySelector('input[name="status"]:checked');
+        if (!selected || selected.value !== 'delivered' || statusForm.dataset.locationCaptured) return;
+        event.preventDefault();
+        statusForm.dataset.locationCaptured = '1';
+        const finish = () => statusForm.submit();
+        if (!navigator.geolocation) { finish(); return; }
+        navigator.geolocation.getCurrentPosition(position => {
+            ajax(App.baseUrl + '/api/update_location.php', {
+                method: 'POST',
+                data: { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy || null },
+            }).finally(finish);
+        }, finish, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
     });
 });
 </script>

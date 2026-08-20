@@ -44,6 +44,17 @@ $todayStats = $pdo->prepare(
 $todayStats->execute([$riderId, $today]);
 $todayStats = $todayStats->fetch();
 
+// Latest known rider location
+$currentLocation = $pdo->prepare(
+    'SELECT latitude, longitude, accuracy, recorded_at
+     FROM rider_locations
+     WHERE rider_id = ?
+     ORDER BY recorded_at DESC
+     LIMIT 1'
+);
+$currentLocation->execute([$riderId]);
+$currentLocation = $currentLocation->fetch();
+
 // Active parcels (latest 5)
 $activeParcels = $pdo->prepare(
     "SELECT * FROM parcels
@@ -53,14 +64,37 @@ $activeParcels = $pdo->prepare(
 $activeParcels->execute([$riderId]);
 $activeParcels = $activeParcels->fetchAll();
 
+// Focus route target: the most recently updated active parcel.
+$routeParcel = $activeParcels[0] ?? null;
+
 $pageTitle    = 'My Dashboard';
 $activePage   = 'dashboard';
 $role         = 'rider';
-$extraScripts = ['/assets/js/tracking.js'];
+$usesMap      = true;
+$extraScripts = ['/assets/js/tracking.js', '/assets/js/rider_map.js'];
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
 <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
 <meta name="base-url"   content="<?= BASE_URL ?>">
+<script>
+    window.RiderRouteData = <?= json_encode([
+        'currentLocation' => $currentLocation ? [
+            'lat' => (float) $currentLocation['latitude'],
+            'lng' => (float) $currentLocation['longitude'],
+            'accuracy' => $currentLocation['accuracy'] !== null ? (float) $currentLocation['accuracy'] : null,
+            'updatedAt' => $currentLocation['recorded_at'],
+        ] : null,
+        'routeParcel' => $routeParcel ? [
+            'id' => (int) $routeParcel['id'],
+            'tracking_number' => $routeParcel['tracking_number'],
+            'recipient_name' => $routeParcel['recipient_name'],
+            'recipient_address' => $routeParcel['recipient_address'],
+            'latitude' => $routeParcel['recipient_latitude'] !== null ? (float) $routeParcel['recipient_latitude'] : null,
+            'longitude' => $routeParcel['recipient_longitude'] !== null ? (float) $routeParcel['recipient_longitude'] : null,
+            'status' => $routeParcel['status'],
+        ] : null,
+    ], JSON_UNESCAPED_UNICODE) ?>;
+</script>
 
 <!-- Hero Section -->
 <div class="rider-hero">
@@ -107,6 +141,64 @@ $extraScripts = ['/assets/js/tracking.js'];
                 <div class="hero-stat-label">Failed</div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Route Map -->
+<div class="section-header" style="margin-top:var(--space-8);">
+    <div>
+        <div class="section-title">Delivery Route</div>
+        <div class="section-subtitle">Current location, destination marker, route line, and ETA for the next active parcel.</div>
+    </div>
+</div>
+
+<div class="route-layout">
+    <div class="route-panel">
+        <div class="route-panel-header">
+            <button type="button" class="route-badge route-badge-primary route-focus-btn" id="routeFocusBtn" <?= $routeParcel ? '' : 'disabled' ?>>Route Focus</button>
+            <span class="route-badge route-badge-muted" id="routeEtaLabel">ETA: —</span>
+        </div>
+        <div class="route-panel-body">
+            <?php if ($routeParcel): ?>
+            <div class="route-info-block">
+                <div class="route-info-label">Parcel</div>
+                <div class="route-info-value"><?= e($routeParcel['tracking_number']) ?></div>
+            </div>
+            <div class="route-info-block">
+                <div class="route-info-label">Recipient</div>
+                <div class="route-info-value"><?= e($routeParcel['recipient_name']) ?></div>
+            </div>
+            <div class="route-info-block">
+                <div class="route-info-label">Destination</div>
+                <div class="route-info-value route-address"><?= e($routeParcel['recipient_address']) ?></div>
+            </div>
+            <div class="route-info-grid">
+                <div>
+                    <div class="route-info-label">Distance</div>
+                    <div class="route-metric" id="routeDistanceLabel">—</div>
+                </div>
+                <div>
+                    <div class="route-info-label">Travel Time</div>
+                    <div class="route-metric" id="routeTravelLabel">—</div>
+                </div>
+            </div>
+            <?php else: ?>
+            <div class="empty-state" style="padding:2rem 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5l3 3"/></svg>
+                <h3>No route available</h3>
+                <p>Assign a parcel to see the delivery route and ETA here.</p>
+            </div>
+            <?php endif; ?>
+        </div>
+        <div class="route-panel-footer">
+            <span class="route-legend"><span class="route-dot route-dot-current"></span> Your location</span>
+            <span class="route-legend"><span class="route-dot route-dot-target"></span> Destination</span>
+            <span class="route-legend"><span class="route-dot route-dot-route"></span> Route</span>
+        </div>
+    </div>
+
+    <div class="route-map-wrap">
+        <div id="routeMap" class="route-map"></div>
     </div>
 </div>
 
@@ -168,6 +260,22 @@ $extraScripts = ['/assets/js/tracking.js'];
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     Tracking.init({ currentlyOnline: <?= $rider['is_online'] ? 'true' : 'false' ?> });
+    if (window.RiderRouteMap && typeof RiderRouteMap.init === 'function') {
+        RiderRouteMap.init('routeMap');
+
+        const routeFocusBtn = document.getElementById('routeFocusBtn');
+        if (routeFocusBtn) {
+            routeFocusBtn.addEventListener('click', function () {
+                if (typeof RiderRouteMap.focusRoute === 'function') {
+                    RiderRouteMap.focusRoute();
+                }
+            });
+        }
+    } else {
+        document.getElementById('routeEtaLabel').textContent = 'ETA: map unavailable';
+        document.getElementById('routeDistanceLabel').textContent = 'Map unavailable';
+        document.getElementById('routeTravelLabel').textContent = 'Map unavailable';
+    }
 });
 </script>
 

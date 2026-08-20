@@ -77,6 +77,8 @@ CREATE TABLE `parcels` (
   `recipient_name`    VARCHAR(100) NOT NULL,
   `recipient_phone`   VARCHAR(20)  NOT NULL,
   `recipient_address` TEXT         NOT NULL,
+  `recipient_latitude`  DECIMAL(10,7) DEFAULT NULL COMMENT 'Manually selected delivery latitude',
+  `recipient_longitude` DECIMAL(10,7) DEFAULT NULL COMMENT 'Manually selected delivery longitude',
   `weight`            DECIMAL(8,2) DEFAULT NULL COMMENT 'Weight in kilograms',
   `notes`             TEXT         DEFAULT NULL,
   `rider_id`          INT UNSIGNED DEFAULT NULL,
@@ -107,6 +109,58 @@ CREATE TABLE `parcel_status_history` (
   KEY `idx_psh_parcel` (`parcel_id`),
   CONSTRAINT `fk_psh_parcel`     FOREIGN KEY (`parcel_id`)  REFERENCES `parcels` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_psh_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `users`   (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------------
+-- Tables: route_plans / route_plan_stops
+-- A saved snapshot of a rider's optimised multi-stop delivery route.
+-- -------------------------------------------------------------
+CREATE TABLE `route_plans` (
+  `id`                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `rider_id`            INT UNSIGNED NOT NULL,
+  `name`                VARCHAR(120) NOT NULL DEFAULT 'Delivery route',
+  `origin_latitude`     DECIMAL(10,8) DEFAULT NULL,
+  `origin_longitude`    DECIMAL(11,8) DEFAULT NULL,
+  `total_distance_m`    INT UNSIGNED DEFAULT NULL,
+  `total_duration_s`    INT UNSIGNED DEFAULT NULL,
+  `status`              ENUM('planned','completed','cancelled') NOT NULL DEFAULT 'planned',
+  `created_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_route_plans_rider_time` (`rider_id`, `created_at`),
+  CONSTRAINT `fk_route_plans_rider` FOREIGN KEY (`rider_id`) REFERENCES `riders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `route_plan_stops` (
+  `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `route_plan_id`   INT UNSIGNED NOT NULL,
+  `parcel_id`       INT UNSIGNED NOT NULL,
+  `stop_order`      SMALLINT UNSIGNED NOT NULL,
+  `latitude`        DECIMAL(10,8) NOT NULL,
+  `longitude`       DECIMAL(11,8) NOT NULL,
+  `created_at`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_route_stop_order` (`route_plan_id`, `stop_order`),
+  KEY `idx_route_stops_parcel` (`parcel_id`),
+  CONSTRAINT `fk_route_stops_plan` FOREIGN KEY (`route_plan_id`) REFERENCES `route_plans` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_route_stops_parcel` FOREIGN KEY (`parcel_id`) REFERENCES `parcels` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Actual GPS path captured when a parcel is first marked delivered.
+CREATE TABLE `delivery_route_records` (
+  `id`               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `parcel_id`        INT UNSIGNED NOT NULL,
+  `rider_id`         INT UNSIGNED NOT NULL,
+  `started_at`       DATETIME NOT NULL,
+  `completed_at`     DATETIME NOT NULL,
+  `path_json`        LONGTEXT NOT NULL,
+  `point_count`      INT UNSIGNED NOT NULL DEFAULT 0,
+  `distance_m`       INT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_delivery_route_parcel` (`parcel_id`),
+  KEY `idx_delivery_routes_rider_time` (`rider_id`, `completed_at`),
+  CONSTRAINT `fk_delivery_route_parcel` FOREIGN KEY (`parcel_id`) REFERENCES `parcels` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_delivery_route_rider` FOREIGN KEY (`rider_id`) REFERENCES `riders` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------------
@@ -150,17 +204,11 @@ CREATE TABLE `activity_logs` (
 -- =============================================================
 
 INSERT INTO `users` (`name`, `email`, `password`, `role`) VALUES
-('System Admin',  'admin@parcel.local',  '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
-('Juan Dela Cruz','rider@parcel.local',  '$2y$12$T7ywBvW8qMvRlP9GtKh1FOrM4xCQRJk9RJ5lYTqGWtxiNQgUz5N7K', 'rider'),
-('Maria Santos',  'rider2@parcel.local', '$2y$12$T7ywBvW8qMvRlP9GtKh1FOrM4xCQRJk9RJ5lYTqGWtxiNQgUz5N7K', 'rider');
+('System Admin',  'admin@parcel.local',  '$2y$12$WvAIeVqdfEWSP66tq5N8Be4zVv71T9xJhun98ua/1NPAdPZ.uvOui', 'admin'),
+('Juan Dela Cruz','rider@parcel.local',  '$2y$12$vJ2WohXZwU4tX1yimmy.vuj56e2oeKQ8l5aRX5c.JmsN1RxQZwf2i', 'rider'),
+('Maria Santos',  'rider2@parcel.local', '$2y$12$vJ2WohXZwU4tX1yimmy.vuj56e2oeKQ8l5aRX5c.JmsN1RxQZwf2i', 'rider');
 
--- Note: Passwords above are bcrypt hashes that do NOT match the plain text.
--- The actual seeding will use PHP-generated hashes. Run setup.php to create
--- proper hashed passwords, OR use the ALTER statements below.
-
--- Use these instead (generated with password_hash('Admin@1234', PASSWORD_BCRYPT, ['cost'=>12])
--- and password_hash('Rider@1234', PASSWORD_BCRYPT, ['cost'=>12])):
-UPDATE `users` SET `password` = '$2y$12$eImiTXuWVxfM37uY4JANjQ==invalid' WHERE 1=0; -- placeholder
+-- The password hashes above are valid bcrypt hashes for the demo credentials.
 
 -- Rider profiles
 INSERT INTO `riders` (`user_id`, `phone`, `vehicle_type`, `plate_number`) VALUES

@@ -77,6 +77,19 @@ $parcels = $pdo->prepare(
 $parcels->execute($params);
 $parcels = $parcels->fetchAll();
 
+// Actual GPS paths captured at the moment riders completed a delivery.
+$routeWhere = ['d.completed_at BETWEEN ? AND ?'];
+$routeParams = [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'];
+if ($riderId !== '') { $routeWhere[] = 'd.rider_id = ?'; $routeParams[] = (int) $riderId; }
+$deliveryRoutes = $pdo->prepare('SELECT d.*, p.tracking_number, p.recipient_name, p.recipient_address, u.name AS rider_name
+    FROM delivery_route_records d
+    JOIN parcels p ON p.id = d.parcel_id
+    JOIN riders r ON r.id = d.rider_id
+    JOIN users u ON u.id = r.user_id
+    WHERE ' . implode(' AND ', $routeWhere) . ' ORDER BY d.completed_at DESC');
+$deliveryRoutes->execute($routeParams);
+$deliveryRoutes = $deliveryRoutes->fetchAll();
+
 // For filter dropdown
 $riders = $pdo->query(
     'SELECT r.id, u.name FROM riders r JOIN users u ON u.id = r.user_id ORDER BY u.name'
@@ -85,6 +98,8 @@ $riders = $pdo->query(
 $pageTitle  = 'Reports';
 $activePage = 'reports';
 $role       = 'admin';
+$usesMap    = true;
+$extraScripts = ['/assets/js/delivery_report_map.js'];
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
 <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
@@ -192,6 +207,30 @@ $role       = 'admin';
         </table>
     </div>
 </div>
+
+<!-- Completed Delivery Routes -->
+<div class="section-header" style="margin-top:var(--space-8);">
+    <div><div class="section-title">Completed delivery routes</div><div class="section-subtitle">Actual GPS route saved when the rider marked a parcel as delivered.</div></div>
+</div>
+<?php if (empty($deliveryRoutes)): ?>
+<div class="card"><div class="empty-state"><h3>No delivery routes in this period</h3><p>Routes appear after a rider completes a delivery while GPS tracking is active.</p></div></div>
+<?php else: ?>
+<script>window.DeliveryRouteReportData = <?= json_encode(array_map(static fn($route) => [
+    'id'=>(int)$route['id'], 'tracking_number'=>$route['tracking_number'], 'rider_name'=>$route['rider_name'],
+    'recipient_address'=>$route['recipient_address'], 'points'=>json_decode($route['path_json'], true) ?: [],
+], $deliveryRoutes), JSON_UNESCAPED_UNICODE) ?>;</script>
+<div class="delivery-route-report-grid">
+    <div class="card delivery-route-report-list">
+        <?php foreach ($deliveryRoutes as $index => $route): ?>
+        <button type="button" class="delivery-route-item <?= $index === 0 ? 'active' : '' ?>" data-route-id="<?= (int)$route['id'] ?>">
+            <span><strong><?= e($route['rider_name']) ?>’s delivery route</strong><small>Completed <?= fmt_date($route['completed_at']) ?></small><small><?= e($route['recipient_name']) ?> · <?= (int)$route['point_count'] ?> GPS points</small></span>
+            <span class="delivery-route-distance"><?= $route['distance_m'] ? number_format($route['distance_m'] / 1000, 1) . ' km' : 'No GPS path' ?></span>
+        </button>
+        <?php endforeach; ?>
+    </div>
+    <div class="card"><div id="deliveryRouteReportMap" class="delivery-route-report-map"></div><div class="delivery-route-map-caption" id="deliveryRouteMapCaption"></div></div>
+</div>
+<?php endif; ?>
 
 <!-- Full Parcel Table -->
 <div class="card">
